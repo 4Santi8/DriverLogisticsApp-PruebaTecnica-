@@ -1,4 +1,4 @@
-package com.example.driverlogisticsapp
+package com.example.driverlogisticsapp.ui
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -6,7 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.driverlogisticsapp.database.DeliveryEntity
+import com.example.driverlogisticsapp.domain.DeliveryRepository
+import com.example.driverlogisticsapp.domain.model.Delivery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,8 +17,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class DeliveryViewModel @Inject constructor(private val repository: Repository): ViewModel() {
-    val deliveryList: StateFlow<List<DeliveryEntity>> = repository.getAllFlow()
+class DeliveryViewModel @Inject constructor(
+    private val repository: DeliveryRepository
+): ViewModel() {
+    val deliveryList: StateFlow<List<Delivery>> = repository.getAllFlow()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -26,7 +29,6 @@ class DeliveryViewModel @Inject constructor(private val repository: Repository):
 
     var isLoading by mutableStateOf(false)
         private set
-
 
 
     fun loadDeliveryList(){

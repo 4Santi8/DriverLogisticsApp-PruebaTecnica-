@@ -1,5 +1,6 @@
-package com.example.driverlogisticsapp.screens
+package com.example.driverlogisticsapp.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,19 +43,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.work.WorkManager
-import com.example.driverlogisticsapp.DeliveryViewModel
-import com.example.driverlogisticsapp.database.DeliveryEntity
+import com.example.driverlogisticsapp.ui.DeliveryViewModel
 import androidx.work.WorkInfo
-import com.example.driverlogisticsapp.queueDelivery
+import com.example.driverlogisticsapp.domain.model.Delivery
+import com.example.driverlogisticsapp.data.workers.queueDelivery
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(deliveryViewModel: DeliveryViewModel){
-    val deliveryList: List<DeliveryEntity> by deliveryViewModel.deliveryList.collectAsStateWithLifecycle()
+    val deliveryList: List<Delivery> by deliveryViewModel.deliveryList.collectAsStateWithLifecycle()
     var showDialog by remember { mutableStateOf(false) }
     var deliveryInfo by remember {
         mutableStateOf(
-            DeliveryEntity(
+            Delivery(
                 101,
                 "Bulto de Fertilizante NPK",
                 "Vereda La Clarita, Finca El Recuerdo, Amalfi, Antioquia"
@@ -71,7 +72,9 @@ fun MainScreen(deliveryViewModel: DeliveryViewModel){
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
             contentPadding = PaddingValues(4.dp)
         ){
             items(items = deliveryList){ deliveryItem ->
@@ -79,6 +82,7 @@ fun MainScreen(deliveryViewModel: DeliveryViewModel){
                     .getWorkInfosByTagFlow (deliveryItem.id.toString())
                     .collectAsState(emptyList())
                 val info = workInfos.lastOrNull()
+                Log.i("MainScreen", "Info: $info")
 
                 Box(
                     modifier = Modifier
@@ -90,7 +94,7 @@ fun MainScreen(deliveryViewModel: DeliveryViewModel){
                             drawLine(
                                 color = Color.Black,
                                 start = Offset(50f, y),
-                                end = Offset(size.width-50, y),
+                                end = Offset(size.width - 50, y),
                                 strokeWidth = strokeWidth
                             )
                         }
@@ -103,7 +107,9 @@ fun MainScreen(deliveryViewModel: DeliveryViewModel){
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxSize().padding(top = 5.dp, bottom = 5.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 5.dp, bottom = 5.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.Start
                     ) {
@@ -155,29 +161,34 @@ fun MainScreen(deliveryViewModel: DeliveryViewModel){
                             textAlign = TextAlign.Center
                         )
                         val modifier = Modifier.fillMaxWidth()
-                        if (deliveryItem.status)
-                        when (info?.state){
-                            WorkInfo.State.ENQUEUED -> Text(
-                                "Esperando conexión",
-                                style = style,
-                                modifier = modifier
-                            )
-                            WorkInfo.State.RUNNING -> Text(
-                                "Enviando confirmación...",
-                                style = style,
-                                modifier = modifier
-                            )
-                            WorkInfo.State.SUCCEEDED -> Text(
-                                "Entrega confirmada con el servidor",
-                                style = style,
-                                modifier = modifier
-                            )
-                            WorkInfo.State.FAILED -> Text(
-                                "Error al enviar confirmación",
-                                style = style,
-                                modifier = modifier
-                            )
-                            else -> {}
+                        if (deliveryItem.status) {
+                            when (info?.state) {
+                                WorkInfo.State.ENQUEUED -> Text(
+                                    "Esperando conexión",
+                                    style = style,
+                                    modifier = modifier
+                                )
+
+                                WorkInfo.State.RUNNING -> Text(
+                                    "Enviando confirmación...",
+                                    style = style,
+                                    modifier = modifier
+                                )
+
+                                WorkInfo.State.SUCCEEDED -> Text(
+                                    "Entrega confirmada con el servidor",
+                                    style = style,
+                                    modifier = modifier
+                                )
+
+                                WorkInfo.State.FAILED -> Text(
+                                    "Error al enviar confirmación",
+                                    style = style,
+                                    modifier = modifier
+                                )
+
+                                else -> {}
+                            }
                         }
                     }
                 }
@@ -230,7 +241,7 @@ fun MainScreen(deliveryViewModel: DeliveryViewModel){
 
 @Composable
 fun InfoScreen(
-    info: DeliveryEntity,
+    info: Delivery,
     viewModel: DeliveryViewModel,
     setShowDialog: (Boolean) -> Unit
 ){

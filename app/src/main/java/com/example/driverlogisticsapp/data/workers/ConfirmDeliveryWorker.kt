@@ -1,18 +1,24 @@
-package com.example.driverlogisticsapp
+package com.example.driverlogisticsapp.data.workers
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import android.util.StatsLog.logStop
+import androidx.annotation.RequiresApi
 import androidx.hilt.work.HiltWorker
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.example.driverlogisticsapp.database.DeliveryDao
-import com.example.driverlogisticsapp.network.DeliveryApi
+import com.example.driverlogisticsapp.data.mapper.toDomain
+import com.example.driverlogisticsapp.data.local.database.DeliveryDao
+import com.example.driverlogisticsapp.data.remote.DeliveryApi
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.UUID
@@ -26,21 +32,29 @@ class ConfirmDeliveryWorker @AssistedInject  constructor(
     private val apiService: DeliveryApi
 ): CoroutineWorker(appContext, workerParams) {
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override suspend fun doWork(): Result{
         val deliveryId = inputData.getLong("deliveryId", 0L)
+        Log.i("ID insede worker", deliveryId.toString())
 
         return try {
-
-            val delivery = dao.getById(deliveryId)
+            val delivery = dao.getById(deliveryId).toDomain()
             val response = apiService.confirmDelivery(delivery)
             if (response.isSuccessful) {
                 Result.success()
             } else {
+                Log.e("ConfirmDeliveryWorker", "Error al confirmar la entrega: ${response.code()}")
                 Result.retry()
             }
         }catch (e: Exception){
-            Log.i("Exception-worker", e.toString())
+            Log.e("Exception-worker", e.toString())
             Result.retry()
+        }finally {
+            if (isStopped) {
+                val reason = stopReason
+                logStop(reason)
+                Log.d("WorkerError", "El worker se detuvo por la razón: $reason")
+            }
         }
 
     }
@@ -58,9 +72,18 @@ fun queueDelivery(context: Context, id: Long): UUID {
         .addTag(id.toString())
         .setConstraints(constraints)
         .setInputData(data)
-        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
-        .build()
+        .setBackoffCriteria(
+            BackoffPolicy.EXPONENTIAL,
+            WorkRequest.MIN_BACKOFF_MILLIS,
+            TimeUnit.MILLISECONDS
+        ).build()
 
-    WorkManager.getInstance(context).enqueue(request)
+    WorkManager
+        .getInstance(context)
+        .enqueueUniqueWork(
+            "sync_deliveries",
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            request
+        )
     return request.id
 }

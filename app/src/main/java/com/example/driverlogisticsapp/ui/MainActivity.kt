@@ -1,5 +1,4 @@
-package com.example.driverlogisticsapp
-
+package com.example.driverlogisticsapp.ui
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -7,14 +6,12 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.example.driverlogisticsapp.screens.MainScreen
+import com.example.driverlogisticsapp.ui.screens.MainScreen
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @AndroidEntryPoint
@@ -26,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Surface(
-                modifier = Modifier
+                modifier = Modifier.Companion
             ) {
                 @Serializable
                 data class Profile(val name: String)

@@ -1,5 +1,6 @@
-package com.example.driverlogisticsapp.network
+package com.example.driverlogisticsapp.data.di
 
+import com.example.driverlogisticsapp.data.remote.DeliveryApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,7 +26,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideApiService(retrofit: Retrofit): DeliveryApi{
+    fun provideApiService(retrofit: Retrofit): DeliveryApi {
         return retrofit.create(DeliveryApi::class.java)
     }
 }

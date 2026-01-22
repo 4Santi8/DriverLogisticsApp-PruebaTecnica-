@@ -1,4 +1,4 @@
-package com.example.driverlogisticsapp.database
+package com.example.driverlogisticsapp.data.local.database
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
